@@ -1,4 +1,4 @@
-name = "pedal-express-backend"
+name = "letsride"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
