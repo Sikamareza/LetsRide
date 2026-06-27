@@ -1,0 +1,11 @@
+name = "pedal-api"
+main = "src/index.ts"
+compatibility_date = "2026-06-27"
+
+# Node.js compatibility (required for many npm packages)
+compatibility_flags = [ "nodejs_compat" ]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pedal-delivery-db"
+database_id = "YOUR_DATABASE_ID_HERE"
