@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LetsRide | Eco-Friendly Bicycle Delivery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- 
+      ⚠️ SECURITY NOTE: Replace YOUR_GOOGLE_MAPS_API_KEY with your actual key. 
+      Because this is frontend code, the key is visible to users. 
+      You MUST restrict this key in the Google Cloud Console to only work on your domain! 
+    -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap"></script>
+
+    <style>
+        /* =========================================
+           GLOBAL & GLASSMORPHISM STYLES
+           ========================================= */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --text: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            min-height: 100vh;
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* Animated background blobs to make the glass effect pop */
+        .bg-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            opacity: 0.6;
+            animation: float 15s infinite ease-in-out;
+        }
+        .blob1 { width: 500px; height: 500px; background: #ff0076; top: -10%; left: -10%; }
+        .blob2 { width: 600px; height: 600px; background: #3b82f6; bottom: -20%; right: -10%; animation-delay: -5s; }
+        .blob3 { width: 400px; height: 400px; background: #8b5cf6; top: 40%; left: 50%; animation-delay: -10s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, -50px) scale(1.1); }
+            66% { transform: translate(-30px, 30px) scale(0.9); }
+        }
+
+        /* Navigation */
+        .glass-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+        .nav-links a:hover { color: #fff; }
+
+        /* Core Glass Components */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Inputs & Buttons */
+        .glass-input {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+        .glass-input:focus {
+            border-color: var(--secondary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .glass-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+
+        .glass-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        .glass-btn.primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            color: #0f2027;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+        .glass-btn.primary:hover {
+            opacity: 0.9;
+            box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        /* Layout & Typography */
+        .section {
+            display: none;
+            animation: fadeInUp 0.6s ease-out forwards;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section.active { display: block; }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            text-align: center;
+            background: linear-gradient(90deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        /* Map & Animations */
+        .map-container {
+            height: 500px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+        }
+        .pulse-dot {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #00ff00;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px #00ff00;
+            animation: pulse 2s infinite;
+            z-index: 10;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(0, 255, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 0, 0); }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links { gap: 1rem; font-size: 0.9rem; }
+            .glass-nav { padding: 1rem; flex-direction: column; gap: 1rem; }
+            .section-title { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Animated Background Blobs -->
+    <div class="bg-blob blob1"></div>
+    <div class="bg-blob blob2"></div>
+    <div class="bg-blob blob3"></div>
+
+    <!-- Navigation -->
+    <nav class="glass-nav">
+        <div class="logo">🚲 LetsRide</div>
+        <ul class="nav-links">
+            <li><a onclick="showSection('home')">Home</a></li>
+            <li><a onclick="showSection('stores')">Stores</a></li>
+            <li><a onclick="showSection('track')">Track</a></li>
+            <li><a onclick="showSection('rider')">Rider Portal</a></li>
+            <li><a onclick="showSection('admin')">Admin</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- HOME SECTION -->
+        <section id="home" class="section active">
+            <div class="glass" style="text-align: center; padding: 4rem 2rem;">
+                <h1 class="section-title" style="font-size: 3.5rem;">Eco-Friendly Local Delivery</h1>
+                <p style="font-size: 1.2rem; color: rgba(255,255,255,0.8); max-width: 600px; margin: 0 auto 2rem;">
+                    Fast, reliable bicycle deliveries for your favorite local stores. Flat rate of <strong>R24</strong> within the zone!
+                </p>
+                <button class="glass-btn primary" style="width: auto; padding: 16px 40px; font-size: 1.2rem;" onclick="showSection('stores')">
+                    Order Now
+                </button>
+            </div>
+
+            <div class="glass-card relay-info" style="text-align: center;">
+                <h3>🔄 Smart Relay System</h3>
+                <p>For deliveries crossing zones, our riders seamlessly hand off your order at borders. No rider gets exhausted, and your delivery fee stays flat!</p>
+            </div>
+        </section>
+
+        <!-- STORES SECTION -->
+        <section id="stores" class="section">
+            <h2 class="section-title">Partner Stores</h2>
+            <div id="stores-grid" class="grid">
+                <!-- Stores injected by JS -->
+            </div>
+        </section>
+
+        <!-- TRACK SECTION -->
+        <section id="track" class="section">
+            <h2 class="section-title">Live Tracking</h2>
+            <div class="glass map-container" id="map">
+                <!-- Fallback mock dot if Google Maps fails to load -->
+                <div class="pulse-dot"></div>
+                <p style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: white; background: rgba(0,0,0,0.5); padding: 8px 16px; border-radius: 20px; z-index: 20;">
+                    🚲 Rider en route...
+                </p>
+            </div>
+        </section>
+
+        <!-- RIDER PORTAL SECTION -->
+        <section id="rider" class="section">
+            <h2 class="section-title">Rider Portal</h2>
+            <div class="glass form-container" id="rider-login">
+                <h3>Rider Login</h3>
+                <input type="text" placeholder="Rider ID Number" class="glass-input">
+                <input type="password" placeholder="Password" class="glass-input">
+                <button class="glass-btn primary" onclick="loginRider()">Login</button>
+            </div>
+            
+            <div id="rider-dashboard" style="display: none;">
+                <div class="grid-2">
+                    <div class="glass">
+                        <h3>Welcome, Rider!</h3>
+                        <p>Status: <span class="pulse-dot" style="position: relative; top: 2px; left: 5px;"></span> Active</p>
+                        <p>Current Zone: Sandton CBD</p>
+                        <button class="glass-btn primary">View Available Deliveries</button>
+                    </div>
+                    <div class="glass">
+                        <h3>My Documents</h3>
+                        <p>✅ ID Verified</p>
+                        <p>✅ Bike Registration</p>
+                        <p>⚠️ First Aid Cert (Expired)</p>
+                        <button class="glass-btn" style="margin-top: 1rem;">Update Documents</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN SECTION -->
+        <section id="admin" class="section">
+            <h2 class="section-title">Admin Dashboard</h2>
+            <div class="glass form-container" id="admin-login">
+                <h3>Admin Access</h3>
+                <input type="text" placeholder="Username" class="glass-input">
+                <input type="password" placeholder="Password" class="glass-input">
+                <button class="glass-btn primary" onclick="loginAdmin()">Login</button>
+            </div>
+            
+            <div id="admin-dashboard" style="display: none;">
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <h4>Add New Store</h4>
+                        <input type="text" placeholder="Store Name" class="glass-input">
+                        <input type="text" placeholder="Zone" class="glass-input">
+                        <button class="glass-btn primary">Add Store</button>
+                    </div>
+                    <div class="glass-card">
+                        <h4>Rider Compliance</h4>
+                        <p>Active Riders: 12</p>
+                        <p>Pending Document Review: 3</p>
+                        <button class="glass-btn" style="margin-top: 1rem;">Review Documents</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal">
+        <div class="glass modal-content">
+            <h2>Complete Payment</h2>
+            <p style="font-size: 1.5rem; margin: 1rem 0;">Total: <strong>R24.00</strong></p>
+            <div class="payment-methods">
+                <button class="glass-btn" onclick="processPayment('Card')">💳 Pay with Card</button>
+                <button class="glass-btn" onclick="processPayment('Instant EFT')">🏦 Instant EFT</button>
+                <button class="glass-btn" onclick="processPayment('Scan')">📱 Scan to Pay</button>
+            </div>
+            <button class="close-btn" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ UPDATE THIS URL to your actual deployed Cloudflare Worker URL
+        const API_URL = "https://letsride.YOUR_SUBDOMAIN.workers.dev"; 
+
+        // --- NAVIGATION ---
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // --- STORES & API ---
+        function fetchStores() {
+            // Mock data in case backend is down or for demo purposes
+            const mockStores = [
+                { name: "Joe's Coffee", zone: "Zone A", base_price: 24 },
+                { name: "Fresh Bites", zone: "Zone A", base_price: 24 },
+                { name: "Burger Joint", zone: "Zone B", base_price: 24 }
+            ];
+
+            fetch(`${API_URL}/api/stores`)
+                .then(res => res.json())
+                .then(data => renderStores(data.length > 0 ? data : mockStores))
+                .catch(() => renderStores(mockStores));
+        }
+
+        function renderStores(stores) {
+            const grid = document.getElementById('stores-grid');
+            grid.innerHTML = stores.map(store => `
+                <div class="glass-card">
+                    <h3>${store.name}</h3>
+                    <p>Zone: ${store.zone || 'Local'}</p>
+                    <p>Delivery: R${store.base_price || 24}</p>
+                    <button class="glass-btn primary" onclick="openPayment()">Order Now</button>
+                </div>
+            `).join('');
+        }
+
+        // --- PAYMENT MODAL ---
+        function openPayment() {
+            document.getElementById('payment-modal').style.display = 'flex';
+        }
+        function closeModal() {
+            document.getElementById('payment-modal').style.display = 'none';
+        }
+        function processPayment(method) {
+            alert(`Redirecting to Payment Gateway for ${method}...`);
+            closeModal();
+        }
+
+        // --- PORTALS ---
+        function loginRider() {
+            document.getElementById('rider-login').style.display = 'none';
+            document.getElementById('rider-dashboard').style.display = 'block';
+        }
+        function loginAdmin() {
+            document.getElementById('admin-login').style.display = 'none';
+            document.getElementById('admin-dashboard').style.display = 'block';
+        }
+
+        // --- GOOGLE MAPS INITIALIZATION ---
+        window.initMap = function() {
+            const mapElement = document.getElementById('map');
+            if (!mapElement) return;
+            
+            // Clear the mock pulsing dot
+            const mockDot = mapElement.querySelector('.pulse-dot');
+            if (mockDot) mockDot.style.display = 'none';
+
+            try {
+                const map = new google.maps.Map(mapElement, {
+                    center: { lat: -26.2041, lng: 28.0473 }, // Johannesburg
+                    zoom: 13,
+                    disableDefaultUI: true,
+                    styles: [
+                        { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
+                        { elementType: "labels.text.fill", stylers: [{ color: "#8ec3b9" }] },
+                        { elementType: "labels.text.stroke", stylers: [{ color: "#1a3646" }] },
+                        { featureType: "water", elementType: "geometry.fill", stylers: [{ color: "#0e1626" }] }
+                    ]
+                });
+
+                new google.maps.Marker({
+                    position: { lat: -26.2041, lng: 28.0473 },
+                    map: map,
+                    title: "Active Rider",
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 10,
+                        fillColor: "#00ff00",
+                        fillOpacity: 1,
+                        strokeWeight: 2,
+                        strokeColor: "#ffffff",
+                    }
+                });
+            } catch (e) {
+                console.error("Google Maps failed to load", e);
+            }
+        };
+
+        // Initialize app on load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchStores();
+        });
+    </script>
+</body>
+</html>
