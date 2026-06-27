@@ -1,26 +1,6 @@
-# Dependencies
 node_modules/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# Environment variables (NEVER push secrets)
-.env
-.env.local
-.env.production
-
-# Wrangler local state
-.wrangler/
 .dev.vars
-
-# Build output
+.wrangler/
 dist/
-build/
-
-# OS files
+*.log
 .DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
