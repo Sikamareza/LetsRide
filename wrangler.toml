@@ -5,8 +5,3 @@ compatibility_date = "2024-12-01"
 # Node.js compatibility for standard libraries
 compatibility_flags = [ "nodejs_compat" ]
 
-# D1 Database Binding
-[[d1_databases]]
-binding = "DB"
-database_name = "pedal-delivery-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
